@@ -1,18 +1,13 @@
-// ImagePuzzle.cpp : Defines the entry point for the application.
-//
-
 #include "framework.h"
 #include "ImagePuzzle.h"
 #include "Game.h"
 
 #define MAX_LOADSTRING 100
 
-// Global Variables:
-HINSTANCE hInst;                                // current instance
-WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
-WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
+HINSTANCE hInst;                               
+WCHAR szTitle[MAX_LOADSTRING];                 
+WCHAR szWindowClass[MAX_LOADSTRING];            
 
-// Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -26,14 +21,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
-    // TODO: Place code here.
-
-    // Initialize global strings
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
     LoadStringW(hInstance, IDC_IMAGEPUZZLE, szWindowClass, MAX_LOADSTRING);
     MyRegisterClass(hInstance);
 
-    // Perform application initialization:
     if (!InitInstance (hInstance, nCmdShow))
     {
         return FALSE;
@@ -43,7 +34,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     MSG msg;
 
-    // Main message loop:
     while (GetMessage(&msg, nullptr, 0, 0))
     {
         if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
@@ -81,7 +71,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance; // Store instance handle in our global variable
 
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPED | WS_SYSMENU,
       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
 
    if (!hWnd)
@@ -95,21 +85,13 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    return TRUE;
 }
 
-//
-//  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
-//
-//  PURPOSE: Processes messages for the main window.
-//
-//  WM_COMMAND  - process the application menu
-//  WM_PAINT    - Paint the main window
-//  WM_DESTROY  - post a quit message and return
-//
-//
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static Game game(hInst);
     PAINTSTRUCT ps;
     HDC hdc;
+    static int x, y;
+    static POINT mousePos;
 
     switch (message)
     {
@@ -122,16 +104,33 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         game.DrawBackground(hdc, hWnd);
         game.DrawTimer(hdc, hWnd);
         game.DrawBoard(hdc, hWnd);
+        /*
+        wchar_t str[100];
+        swprintf_s(str, L"                          ");
+        TextOut(hdc, 1000, 10, str, _tcslen(str));
+        swprintf_s(str, L"%d, %d", x, y);
+        TextOut(hdc, 1000, 10, str, _tcslen(str));
+
+        wchar_t str1[100];
+        swprintf_s(str1, L"                          ");
+        TextOut(hdc, 1000, 70, str1, _tcslen(str1));
+        swprintf_s(str1, L"%d, %d", mousePos.x, mousePos.y);
+        TextOut(hdc, 1000, 70, str1, _tcslen(str1));
+        */
 
         EndPaint(hWnd, &ps);
         break;
 
     case WM_LBUTTONUP:
-        // 
         // 클릭한 자리 상하좌우에 클릭한 자리 좌표 저장. 상하좌우에서 그 자리로 이동할 수 있다는 뜻
         // available
+        // 클릭하면 그 위치 상하좌우에 그 위치를 저장. 이전에 저장했던 상하좌우 좌표는 그대로 두고 available만 false
+        GetCursorPos(&mousePos);
+        ScreenToClient(hWnd, &mousePos);
 
-
+        game.OnClick(mousePos.x, mousePos.y);
+        game.CheckVictory();
+        InvalidateRgn(hWnd, NULL, FALSE);
         break;
 
     case WM_TIMER:

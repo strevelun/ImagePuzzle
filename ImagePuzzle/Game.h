@@ -6,8 +6,17 @@
 
 #define IMAGE_SIZE		100
 
+typedef struct _pos
+{
+	int x, y;
+	_pos() : x(0), y(0) {}
+	_pos(int _x, int _y) : x(_x), y(_y) {}
+} Pos;
+
 typedef struct _image
 {
+	Pos availPos;
+	bool available = false;
 	int x, y;
 	_image() : x(0), y(0) {}
 	_image(int _x, int _y) : x(_x), y(_y) {}
@@ -26,9 +35,13 @@ private:
 	HINSTANCE hInst;
 
 	bool backgroundDrawn = false;
+	bool updateBoard = false;
 
-	Image board[5][5]; 
+	Image board[5][5], mixedBoard[5][5];
+	int boardState[5][5] = {0};
 	std::vector<Image> images;
+	Image temp;
+	int xIdx, yIdx;
 
 public:
 	Game(HINSTANCE inst) : hInst(inst)
@@ -45,5 +58,8 @@ public:
 
 	void UpdateTimer();
 
+	void OnClick(int x, int y);
+	void ChangeState(bool b = true);
+	void CheckVictory();
 };
 
