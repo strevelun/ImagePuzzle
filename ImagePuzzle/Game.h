@@ -5,6 +5,7 @@
 #include <vector>
 
 #define IMAGE_SIZE		100
+#define BOARD_SIZE		3
 
 typedef struct _pos
 {
@@ -20,6 +21,8 @@ typedef struct _image
 	int x, y;
 	_image() : x(0), y(0) {}
 	_image(int _x, int _y) : x(_x), y(_y) {}
+
+	bool operator==(const _image& image) { return ((x - 600) / 1.6 == image.x) && ((y - 100) / 1.6 == image.y); }
 } Image;
 
 class Game
@@ -37,8 +40,8 @@ private:
 	bool backgroundDrawn = false;
 	bool updateBoard = false;
 
-	Image board[5][5], mixedBoard[5][5];
-	int boardState[5][5] = {0};
+	Image board[BOARD_SIZE][BOARD_SIZE], mixedBoard[BOARD_SIZE][BOARD_SIZE];
+	int boardState[BOARD_SIZE][BOARD_SIZE] = {0};
 	std::vector<Image> images;
 	Image temp;
 	int xIdx, yIdx;

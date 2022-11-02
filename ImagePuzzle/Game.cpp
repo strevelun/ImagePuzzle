@@ -5,13 +5,13 @@ void Game::InitBoard(HDC hdc, HWND hWnd)
 {
     SYSTEMTIME st;
     GetLocalTime(&st);
-    int omit = st.wSecond % 25;
+    int omit = st.wSecond % (BOARD_SIZE * BOARD_SIZE);
     int k = 0;
-    boardState[omit / 5][omit % 5] = 1; // 비어있는 곳
+    boardState[omit / BOARD_SIZE][omit % BOARD_SIZE] = 1; // 비어있는 곳
 
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < BOARD_SIZE; i++)
     {
-        for (int j = 0; j < 5; j++)
+        for (int j = 0; j < BOARD_SIZE; j++)
         {
             int curX = j * IMAGE_SIZE;
             int curY = i * IMAGE_SIZE;
@@ -39,9 +39,9 @@ void Game::InitBoard(HDC hdc, HWND hWnd)
     std::mt19937 gen(rd());
     int random;
 
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < BOARD_SIZE; i++)
     {
-        for (int j = 0; j < 5; j++)
+        for (int j = 0; j < BOARD_SIZE; j++)
         {
             int size = images.size();
 
@@ -65,6 +65,10 @@ void Game::InitBoard(HDC hdc, HWND hWnd)
 
         }
     }
+
+    // 현재 빈 칸에 들어가야 할 퍼즐 조각
+    Image img = images.back();
+    StretchBlt(hdc, 1300, 100, IMAGE_SIZE * 1.6, IMAGE_SIZE * 1.6, memdc, img.x, img.y, IMAGE_SIZE, IMAGE_SIZE, SRCCOPY);
 }
 
 void Game::DrawBackground(HDC hdc, HWND hWnd)
@@ -158,7 +162,7 @@ void Game::ChangeState(bool b)
         board[yIdx - 1][xIdx].available = b;
         board[yIdx - 1][xIdx].availPos = Pos(xIdx, yIdx);
     }
-    if (yIdx + 1 < 5)
+    if (yIdx + 1 < BOARD_SIZE)
     {
         board[yIdx + 1][xIdx].available = b;
         board[yIdx + 1][xIdx].availPos = Pos(xIdx, yIdx);
@@ -168,7 +172,7 @@ void Game::ChangeState(bool b)
         board[yIdx][xIdx - 1].available = b;
         board[yIdx][xIdx - 1].availPos = Pos(xIdx, yIdx);
     }
-    if (xIdx + 1 < 5)
+    if (xIdx + 1 < BOARD_SIZE)
     {
         board[yIdx][xIdx + 1].available = b;
         board[yIdx][xIdx + 1].availPos = Pos(xIdx, yIdx);
@@ -177,11 +181,20 @@ void Game::ChangeState(bool b)
 
 void Game::CheckVictory()
 {
-    for (int i = 0; i < 5; i++)
-    {
-        for (int j = 0; j < 5; j++)
-        {
+    // 빈 공간을 제외한 나머지 비교. 하나라도 안 맞을 경우 return
 
+    int score = 0;
+
+    for (int i = 0; i < BOARD_SIZE; i++)
+    {
+        for (int j = 0; j < BOARD_SIZE; j++)
+        {
+            if (board[i][j] == mixedBoard[i][j] && boardState[i][j] != 1)
+                score++;
         }
     }
+
+    wchar_t result[10];
+    swprintf_s(result, L"%d점 %d분 %d초", score, minute, second);
+    MessageBox(NULL, result, L"결과", MB_OK);
 }

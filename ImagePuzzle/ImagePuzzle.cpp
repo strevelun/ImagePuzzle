@@ -129,8 +129,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         ScreenToClient(hWnd, &mousePos);
 
         game.OnClick(mousePos.x, mousePos.y);
-        game.CheckVictory();
+        //game.CheckVictory();
         InvalidateRgn(hWnd, NULL, FALSE);
+        break;
+
+    case WM_KEYDOWN:
+        game.CheckVictory();
         break;
 
     case WM_TIMER:
