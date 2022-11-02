@@ -104,6 +104,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         game.DrawBackground(hdc, hWnd);
         game.DrawTimer(hdc, hWnd);
         game.DrawBoard(hdc, hWnd);
+        game.CheckVictory();
         /*
         wchar_t str[100];
         swprintf_s(str, L"                          ");
@@ -129,17 +130,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         ScreenToClient(hWnd, &mousePos);
 
         game.OnClick(mousePos.x, mousePos.y);
-        //game.CheckVictory();
         InvalidateRgn(hWnd, NULL, FALSE);
         break;
 
     case WM_KEYDOWN:
-        game.CheckVictory();
+        //game.CheckVictory();
         break;
 
     case WM_TIMER:
-        game.UpdateTimer();
-        InvalidateRgn(hWnd, NULL, FALSE);
+        game.UpdateTimer(hWnd);
         break;
     case WM_DESTROY:
         KillTimer(hWnd, 1);

@@ -22,8 +22,6 @@ void Game::InitBoard(HDC hdc, HWND hWnd)
 
             if (boardState[i][j] != 1)
                 continue;
-            
-            temp = board[i][j]; // TODO remove
 
             xIdx = j;
             yIdx = i;
@@ -35,40 +33,9 @@ void Game::InitBoard(HDC hdc, HWND hWnd)
         }
     }
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    int random;
+    //RandomizeBoard(hdc);
+    RandomizeBoardTemp(hdc);
 
-    for (int i = 0; i < BOARD_SIZE; i++)
-    {
-        for (int j = 0; j < BOARD_SIZE; j++)
-        {
-            int size = images.size();
-
-            if (size <= 0)
-                break;
-
-            if (boardState[i][j] == 1)
-                continue;
-
-            std::uniform_int_distribution<int> d1(0, size - 1);
-            random = d1(gen);
-
-
-            Image image;
-            image = images[random];
-            images.erase(images.begin() + random);
-
-            StretchBlt(hdc, board[i][j].x, board[i][j].y, IMAGE_SIZE * 1.6, IMAGE_SIZE * 1.6, memdc, image.x, image.y, IMAGE_SIZE, IMAGE_SIZE, SRCCOPY); // 1.6배 크게
-            mixedBoard[i][j].x = image.x;
-            mixedBoard[i][j].y = image.y;
-
-        }
-    }
-
-    // 현재 빈 칸에 들어가야 할 퍼즐 조각
-    Image img = images.back();
-    StretchBlt(hdc, 1300, 100, IMAGE_SIZE * 1.6, IMAGE_SIZE * 1.6, memdc, img.x, img.y, IMAGE_SIZE, IMAGE_SIZE, SRCCOPY);
 }
 
 void Game::DrawBackground(HDC hdc, HWND hWnd)
@@ -119,18 +86,129 @@ void Game::DrawBoard(HDC hdc, HWND hWnd)
     int availX = board[yIdx][xIdx].availPos.x;
     int availY = board[yIdx][xIdx].availPos.y;
     StretchBlt(hdc, board[availY][availX].x, board[availY][availX].y, IMAGE_SIZE * 1.6, IMAGE_SIZE * 1.6, memdc, mixedBoard[yIdx][xIdx].x, mixedBoard[yIdx][xIdx].y, IMAGE_SIZE, IMAGE_SIZE, SRCCOPY); // 1.6배 크게
-    mixedBoard[availY][availX].x = mixedBoard[yIdx][xIdx].x;
-    mixedBoard[availY][availX].y = mixedBoard[yIdx][xIdx].y;
+    Image temp = mixedBoard[availY][availX];
+    mixedBoard[availY][availX] = mixedBoard[yIdx][xIdx];
+    mixedBoard[yIdx][xIdx] = temp;
 
     DeleteDC(memdc);
 
 }
 
-void Game::UpdateTimer()
+void Game::UpdateTimer(HWND hWnd)
 {
+    if (victory) 
+    {
+        KillTimer(hWnd, 1);
+        return;
+    }
+
     minute = second == 59 ? minute + 1 : minute;
     second = (second + 1) % 60;
     _stprintf_s(sTime, _T("%d:%d"), minute, second);
+    InvalidateRgn(hWnd, NULL, FALSE);
+}
+
+void Game::RandomizeBoard(HDC hdc)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    int random;
+
+    for (int i = 0; i < BOARD_SIZE; i++)
+    {
+        for (int j = 0; j < BOARD_SIZE; j++)
+        {
+            int size = images.size();
+
+            if (size <= 0)
+                break;
+
+            std::uniform_int_distribution<int> d1(0, size - 1);
+            random = d1(gen);
+
+
+            Image image;
+            image = images[random];
+            images.erase(images.begin() + random);
+            mixedBoard[i][j].x = image.x;
+            mixedBoard[i][j].y = image.y;
+
+            if (boardState[i][j] == 1)
+            {
+                StretchBlt(hdc, 1500, 100, IMAGE_SIZE * 1.6, IMAGE_SIZE * 1.6, memdc, mixedBoard[i][j].x, mixedBoard[i][j].y, IMAGE_SIZE, IMAGE_SIZE, SRCCOPY);
+                continue;
+            }
+
+            StretchBlt(hdc, board[i][j].x, board[i][j].y, IMAGE_SIZE * 1.6, IMAGE_SIZE * 1.6, memdc, image.x, image.y, IMAGE_SIZE, IMAGE_SIZE, SRCCOPY); // 1.6배 크게
+
+        }
+    }
+}
+
+void Game::RandomizeBoardTemp(HDC hdc)
+{
+    int blanki, blankj;
+
+    for (int i = 0; i < BOARD_SIZE; i++)
+    {
+        for (int j = 0; j < BOARD_SIZE; j++)
+        {
+            if (boardState[i][j] == 1)
+            {
+                blanki = i;
+                blankj = j;
+                //continue;
+            }
+
+            mixedBoard[i][j].x = (board[i][j].x - 600) / 1.6;
+            mixedBoard[i][j].y = (board[i][j].y - 100) / 1.6;
+        }
+    }
+
+    // 빈 퍼즐 부분의 좌표에서 상하좌우 확인한 다음 가장 처음 교체 가능한 곳과 교체
+
+    boardState[blanki][blankj] = 0;
+    ChangeState(false);
+
+    if (blanki - 1 >= 0)
+    {
+        yIdx = blanki - 1;
+    }
+    else if (blanki + 1 < BOARD_SIZE)
+    {
+        yIdx = blanki + 1;
+    }
+    else if (blankj - 1 >= 0)
+    {
+        xIdx = blankj - 1;
+    }
+    else if (blankj + 1 < BOARD_SIZE)
+    {
+        xIdx = blankj + 1;
+    }
+
+    ChangeState();
+    boardState[yIdx][xIdx] = 1;
+    //updateBoard = true;
+
+    Image temp = mixedBoard[blanki][blankj];
+    mixedBoard[blanki][blankj] = mixedBoard[yIdx][xIdx];
+    mixedBoard[yIdx][xIdx] = temp;
+
+    StretchBlt(hdc, 1500, 100, IMAGE_SIZE * 1.6, IMAGE_SIZE * 1.6, memdc, mixedBoard[yIdx][xIdx].x, mixedBoard[yIdx][xIdx].y, IMAGE_SIZE, IMAGE_SIZE, SRCCOPY);
+
+    for (int i = 0; i < BOARD_SIZE; i++)
+    {
+        for (int j = 0; j < BOARD_SIZE; j++)
+        {
+            if (boardState[i][j] == 1)
+            {
+               // StretchBlt(hdc, 1500, 100, IMAGE_SIZE * 1.6, IMAGE_SIZE * 1.6, memdc, mixedBoard[i][j].x, mixedBoard[i][j].y, IMAGE_SIZE, IMAGE_SIZE, SRCCOPY);
+                continue;
+            }
+            StretchBlt(hdc, board[i][j].x, board[i][j].y, IMAGE_SIZE * 1.6, IMAGE_SIZE * 1.6, memdc, mixedBoard[i][j].x, mixedBoard[i][j].y, IMAGE_SIZE, IMAGE_SIZE, SRCCOPY);
+        }
+    }
 }
 
 void Game::OnClick(int x, int y)
@@ -181,20 +259,21 @@ void Game::ChangeState(bool b)
 
 void Game::CheckVictory()
 {
+    if (xIdx < 0 || xIdx >= BOARD_SIZE || yIdx < 0 || yIdx >= BOARD_SIZE)
+        return;
+
     // 빈 공간을 제외한 나머지 비교. 하나라도 안 맞을 경우 return
 
-    int score = 0;
 
     for (int i = 0; i < BOARD_SIZE; i++)
     {
         for (int j = 0; j < BOARD_SIZE; j++)
         {
-            if (board[i][j] == mixedBoard[i][j] && boardState[i][j] != 1)
-                score++;
+            if (board[i][j] != mixedBoard[i][j] && boardState[i][j] != 1)
+                return;
         }
     }
 
-    wchar_t result[10];
-    swprintf_s(result, L"%d점 %d분 %d초", score, minute, second);
-    MessageBox(NULL, result, L"결과", MB_OK);
+    victory = true;
+    MessageBox(NULL, L"성공", L"결과", MB_OK);
 }

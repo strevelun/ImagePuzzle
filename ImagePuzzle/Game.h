@@ -5,7 +5,7 @@
 #include <vector>
 
 #define IMAGE_SIZE		100
-#define BOARD_SIZE		3
+#define BOARD_SIZE		5
 
 typedef struct _pos
 {
@@ -22,7 +22,8 @@ typedef struct _image
 	_image() : x(0), y(0) {}
 	_image(int _x, int _y) : x(_x), y(_y) {}
 
-	bool operator==(const _image& image) { return ((x - 600) / 1.6 == image.x) && ((y - 100) / 1.6 == image.y); }
+	bool operator==(const _image& image) { return (((x - 600) / 1.6) == image.x) && (((y - 100) / 1.6) == image.y); }
+	bool operator!=(const _image& image) { return (((x - 600) / 1.6) != image.x) || (((y - 100) / 1.6) != image.y); }
 } Image;
 
 class Game
@@ -43,8 +44,8 @@ private:
 	Image board[BOARD_SIZE][BOARD_SIZE], mixedBoard[BOARD_SIZE][BOARD_SIZE];
 	int boardState[BOARD_SIZE][BOARD_SIZE] = {0};
 	std::vector<Image> images;
-	Image temp;
 	int xIdx, yIdx;
+	bool victory = false;
 
 public:
 	Game(HINSTANCE inst) : hInst(inst)
@@ -59,7 +60,10 @@ public:
 	void DrawTimer(HDC hdc, HWND hWnd);
 	void DrawBoard(HDC hdc, HWND hWnd);
 
-	void UpdateTimer();
+	void UpdateTimer(HWND hWnd);
+
+	void RandomizeBoard(HDC hdc);
+	void RandomizeBoardTemp(HDC hdc);
 
 	void OnClick(int x, int y);
 	void ChangeState(bool b = true);
